@@ -7,17 +7,23 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f4f4f4;
+            background-color: #0a192f;
+            color: white;
         }
 
         h1 {
             margin-top: 40px;
+            color: #64ffda;
+        }
+
+        #status {
+            color: #ccd6f6;
         }
 
         .board {
             display: grid;
             grid-template-columns: repeat(3, 100px);
-            gap: 5px;
+            gap: 8px;
             justify-content: center;
             margin: 30px auto;
         }
@@ -25,21 +31,32 @@
         .cell {
             width: 100px;
             height: 100px;
-            background-color: white;
-            border: 2px solid black;
+            background-color: #112240;
+            color: #64ffda;
+            border: 2px solid #233554;
             font-size: 40px;
             font-weight: bold;
             cursor: pointer;
+            border-radius: 8px;
         }
 
         .cell:hover {
-            background-color: #ddd;
+            background-color: #1d3557;
         }
 
         #restart {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            background-color: #64ffda;
+            color: #0a192f;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        #restart:hover {
+            background-color: #52d6b8;
         }
     </style>
 </head>
@@ -64,51 +81,70 @@
         <button class="cell" onclick="play(8)"></button>
     </div>
 
-    <button id="restart" onclick="restartGame()">Restart Game</button>
+    <button id="restart" onclick="restartGame()">
+        Restart Game
+    </button>
 
 
     <script>
 
+        // Player X starts first
         let currentPlayer = "X";
 
+        // Stores the current game board
         let board = [
             "", "", "",
             "", "", "",
             "", "", ""
         ];
 
+        // Keeps track of whether the game has ended
         let gameOver = false;
 
+
+        // All possible ways to win
         const winningCombinations = [
+
+            // Rows
             [0, 1, 2],
             [3, 4, 5],
             [6, 7, 8],
 
+            // Columns
             [0, 3, 6],
             [1, 4, 7],
             [2, 5, 8],
 
+            // Diagonals
             [0, 4, 8],
             [2, 4, 6]
         ];
 
 
+        // Runs when a player clicks a square
         function play(index) {
 
+            // Stop if the square is already used
+            // or the game has ended
             if (board[index] != "" || gameOver == true) {
                 return;
             }
 
+            // Save the player's move
             board[index] = currentPlayer;
 
+            // Get all game board cells
             let cells = document.getElementsByClassName("cell");
 
+            // Display X or O
             cells[index].innerHTML = currentPlayer;
 
+            // Check if someone won
             checkWinner();
         }
 
 
+        // Checks if there is a winner
         function checkWinner() {
 
             for (let i = 0; i < winningCombinations.length; i++) {
@@ -117,11 +153,14 @@
                 let b = winningCombinations[i][1];
                 let c = winningCombinations[i][2];
 
+
+                // Check if all three squares match
                 if (
                     board[a] != "" &&
                     board[a] == board[b] &&
                     board[b] == board[c]
                 ) {
+
                     document.getElementById("status").innerHTML =
                         "Player " + currentPlayer + " Wins!";
 
@@ -132,6 +171,7 @@
             }
 
 
+            // Check if all squares are filled
             if (!board.includes("")) {
 
                 document.getElementById("status").innerHTML =
@@ -143,34 +183,50 @@
             }
 
 
+            // Switch players
             if (currentPlayer == "X") {
+
                 currentPlayer = "O";
+
             } else {
+
                 currentPlayer = "X";
             }
 
+
+            // Display whose turn it is
             document.getElementById("status").innerHTML =
                 "Player " + currentPlayer + "'s Turn";
         }
 
 
+        // Restarts the game
         function restartGame() {
 
+            // Clear the board
             board = [
                 "", "", "",
                 "", "", "",
                 "", "", ""
             ];
 
+            // Reset player
             currentPlayer = "X";
+
+            // Allow game to continue
             gameOver = false;
 
+
+            // Reset status message
             document.getElementById("status").innerHTML =
                 "Player X's Turn";
 
+
+            // Clear X and O from every square
             let cells = document.getElementsByClassName("cell");
 
             for (let i = 0; i < cells.length; i++) {
+
                 cells[i].innerHTML = "";
             }
         }
