@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chess</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #0a192f;
+            color: white;
+        }
+
+        h1 {
+            margin-top: 30px;
+            color: white;
+        }
+
+        #status {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 65px);
+            grid-template-rows: repeat(8, 65px);
+
+            width: 520px;
+            margin: 20px auto;
+
+            border: 4px solid #233554;
+        }
+
+        .square {
+            width: 65px;
+            height: 65px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 45px;
+            cursor: pointer;
+
+            user-select: none;
+        }
+
+        .light {
+            background-color: #ccd6f6;
+        }
+
+        .dark {
+            background-color: #355070;
+        }
+
+        .selected {
+            background-color: #64ffda !important;
+        }
+
+        .possible {
+            box-shadow: inset 0 0 0 5px #52d6b8;
+        }
+
+        #restart {
+            padding: 10px 20px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            background-color: #64ffda;
+            color: #0a192f;
+
+            border: none;
+            border-radius: 6px;
+
+            cursor: pointer;
+        }
+
+        #restart:hover {
+            background-color: #52d6b8;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <h1>Chess</h1>
+
+    <h2 id="status">
+        White's Turn
+    </h2>
+
+
+    <div id="board"></div>
+
+
+    <button id="restart" onclick="restartGame()">
+        Restart Game
+    </button>
+
+
+    <script>
+
+        // Chess pieces
+
+        const pieces = {
+
+            whiteKing: "♔",
+            whiteQueen: "♕",
+            whiteRook: "♖",
+            whiteBishop: "♗",
+            whiteKnight: "♘",
+            whitePawn: "♙",
+
+            blackKing: "♚",
+            blackQueen: "♛",
+            blackRook: "♜",
+            blackBishop: "♝",
+            blackKnight: "♞",
+            blackPawn: "♟"
+        };
+
+
+        let board = [];
+
+        let currentPlayer = "white";
+
+        let selectedRow = null;
+
+        let selectedColumn = null;
+
+        let possibleMoves = [];
+
+        let gameOver = false;
+
+
+
+        // Start game
+
+        createGame();
+
+
+
+        function createGame() {
+
+            board = [
+
+                [
+                    pieces.blackRook,
+                    pieces.blackKnight,
+                    pieces.blackBishop,
+                    pieces.blackQueen,
+                    pieces.blackKing,
+                    pieces.blackBishop,
+                    pieces.blackKnight,
+                    pieces.blackRook
+                ],
+
+                [
+                    pieces.blackPawn,
+                    pieces.blackPawn,
+                    pieces.blackPawn,
+                    pieces.blackPawn,
+                    pieces.blackPawn,
+                    pieces.blackPawn,
+                    pieces.blackPawn,
+                    pieces.blackPawn
+                ],
+
+                ["", "", "", "", "", "", "", ""],
+
+                ["", "", "", "", "", "", "", ""],
+
+                ["", "", "", "", "", "", "", ""],
+
+                ["", "", "", "", "", "", "", ""],
+
+                [
+                    pieces.whitePawn,
+                    pieces.whitePawn,
+                    pieces.whitePawn,
+                    pieces.whitePawn,
+                    pieces.whitePawn,
+                    pieces.whitePawn,
+                    pieces.whitePawn,
+                    pieces.whitePawn
+                ],
+
+                [
+                    pieces.whiteRook,
+                    pieces.whiteKnight,
+                    pieces.whiteBishop,
+                    pieces.whiteQueen,
+                    pieces.whiteKing,
+                    pieces.whiteBishop,
+                    pieces.whiteKnight,
+                    pieces.whiteRook
+                ]
+            ];
+
+
+            currentPlayer = "white";
+
+            selectedRow = null;
+
+            selectedColumn = null;
+
+            possibleMoves = [];
+
+            gameOver = false;
+
+
+            document.getElementById("status").innerHTML =
+                "White's Turn";
+
+
+            drawBoard();
+        }
+
+
+
+        // DRAW BOARD
+
+        function drawBoard() {
+
+            let boardElement =
+                document.getElementById("board");
+
+
+            boardElement.innerHTML = "";
+
+
+            for (let row = 0; row < 8; row++) {
+
+                for (let column = 0; column < 8; column++) {
+
+                    let square =
+                        document.createElement("div");
+
+
+                    square.classList.add("square");
+
+
+                    // Chess board colors
+
+                    if ((row + column) % 2 == 0) {
+
+                        square.classList.add("light");
+
+                    }
+
+                    else {
+
+                        square.classList.add("dark");
+
+                    }
+
+
+                    // Selected piece
+
+                    if (
+                        row == selectedRow &&
+                        column == selectedColumn
+                    ) {
+
+                        square.classList.add("selected");
+
+                    }
+
+
+                    // Possible moves
+
+                    for (let move of possibleMoves) {
+
+                        if (
+                            move.row == row &&
+                            move.column == column
+                        ) {
+
+                            square.classList.add("possible");
+
+                        }
+                    }
+
+
+                    square.innerHTML =
+                        board[row][column];
+
+
+                    square.onclick = function() {
+
+                        clickSquare(row, column);
+
+                    };
+
+
+                    boardElement.appendChild(square);
+                }
+            }
+        }
+
+
+
+        // CLICK A SQUARE
+
+        function clickSquare(row, column) {
+
+            if (gameOver == true) {
+                return;
+            }
+
+
+            let piece = board[row][column];
+
+
+            // If no piece is selected
+
+            if (selectedRow == null) {
+
+                if (
+                    piece != "" &&
+                    getColor(piece) == currentPlayer
+                ) {
+
+                    selectPiece(row, column);
+
+                }
+
+                return;
+            }
+
+
+            // Check if clicked square
+            // is a possible move
+
+            let validMove = false;
+
+
+            for (let move of possibleMoves) {
+
+                if (
+                    move.row == row &&
+                    move.column == column
+                ) {
+
+                    validMove = true;
+
+                }
+            }
+
+
+            if (validMove == true) {
+
+                movePiece(row, column);
+
+                return;
+            }
+
+
+            // Select another piece
+
+            if (
+                piece != "" &&
+                getColor(piece) == currentPlayer
+            ) {
+
+                selectPiece(row, column);
+
+                return;
+            }
+
+
+            // Cancel selection
+
+            selectedRow = null;
+
+            selectedColumn = null;
+
+            possibleMoves = [];
+
+            drawBoard();
+        }
+
+
+
+        // SELECT PIECE
+
+        function selectPiece(row, column) {
+
+            selectedRow = row;
+
+            selectedColumn = column;
+
+
+            possibleMoves =
+                getPossibleMoves(row, column);
+
+
+            drawBoard();
+        }
+
+
+
+        // MOVE PIECE
+
+        function movePiece(newRow, newColumn) {
+
+            let movingPiece =
+                board[selectedRow][selectedColumn];
+
+
+            let capturedPiece =
+                board[newRow][newColumn];
+
+
+            // Move piece
+
+            board[newRow][newColumn] =
+                movingPiece;
+
+
+            board[selectedRow][selectedColumn] = "";
+
+
+            // Pawn promotion
+
+            if (
+                movingPiece == pieces.whitePawn &&
+                newRow == 0
+            ) {
+
+                board[newRow][newColumn] =
+                    pieces.whiteQueen;
+
+            }
+
+
+            if (
+                movingPiece == pieces.blackPawn &&
+                newRow == 7
+            ) {
+
+                board[newRow][newColumn] =
+                    pieces.blackQueen;
+
+            }
+
+
+            // Check if king was captured
+
+            if (
+                capturedPiece == pieces.whiteKing
+            ) {
+
+                document.getElementById("status").innerHTML =
+                    "Black Wins!";
+
+                gameOver = true;
+
+            }
+
+
+            else if (
+                capturedPiece == pieces.blackKing
+            ) {
+
+                document.getElementById("status").innerHTML =
+                    "White Wins!";
+
+                gameOver = true;
+
+            }
+
+
+            else {
+
+                // Switch player
+
+                if (currentPlayer == "white") {
+
+                    currentPlayer = "black";
+
+                    document.getElementById("status").innerHTML =
+                        "Black's Turn";
+
+                }
+
+                else {
+
+                    currentPlayer = "white";
+
+                    document.getElementById("status").innerHTML =
+                        "White's Turn";
+
+                }
+
+            }
+
+
+            selectedRow = null;
+
+            selectedColumn = null;
+
+            possibleMoves = [];
+
+
+            drawBoard();
+        }
+
+
+
+        // GET POSSIBLE MOVES
+
+        function getPossibleMoves(row, column) {
+
+            let piece = board[row][column];
+
+            let moves = [];
+
+
+            // PAWN
+
+            if (
+                piece == pieces.whitePawn ||
+                piece == pieces.blackPawn
+            ) {
+
+                moves =
+                    getPawnMoves(row, column, piece);
+
+            }
+
+
+            // ROOK
+
+            else if (
+                piece == pieces.whiteRook ||
+                piece == pieces.blackRook
+            ) {
+
+                moves =
+                    getStraightMoves(row, column);
+
+            }
+
+
+            // BISHOP
+
+            else if (
+                piece == pieces.whiteBishop ||
+                piece == pieces.blackBishop
+            ) {
+
+                moves =
+                    getDiagonalMoves(row, column);
+
+            }
+
+
+            // QUEEN
+
+            else if (
+                piece == pieces.whiteQueen ||
+                piece == pieces.blackQueen
+            ) {
+
+                moves =
+                    getStraightMoves(row, column)
+                    .concat(
+                        getDiagonalMoves(row, column)
+                    );
+
+            }
+
+
+            // KING
+
+            else if (
+                piece == pieces.whiteKing ||
+                piece == pieces.blackKing
+            ) {
+
+                moves =
+                    getKingMoves(row, column);
+
+            }
+
+
+            // KNIGHT
+
+            else if (
+                piece == pieces.whiteKnight ||
+                piece == pieces.blackKnight
+            ) {
+
+                moves =
+                    getKnightMoves(row, column);
+
+            }
+
+
+            return moves;
+        }
+
+
+
+        // PAWN MOVEMENT
+
+        function getPawnMoves(row, column, piece) {
+
+            let moves = [];
+
+            let direction;
+
+            let startRow;
+
+
+            if (piece == pieces.whitePawn) {
+
+                direction = -1;
+
+                startRow = 6;
+
+            }
+
+            else {
+
+                direction = 1;
+
+                startRow = 1;
+
+            }
+
+
+            // Move forward
+
+            if (
+                insideBoard(row + direction, column) &&
+                board[row + direction][column] == ""
+            ) {
+
+                moves.push({
+                    row: row + direction,
+                    column: column
+                });
+
+
+                // First move can move 2 spaces
+
+                if (
+                    row == startRow &&
+                    board[row + direction * 2][column] == ""
+                ) {
+
+                    moves.push({
+                        row: row + direction * 2,
+                        column: column
+                    });
+
+                }
+            }
+
+
+            // Capture left and right
+
+            let captureColumns = [
+                column - 1,
+                column + 1
+            ];
+
+
+            for (let captureColumn of captureColumns) {
+
+                let captureRow =
+                    row + direction;
+
+
+                if (
+                    insideBoard(
+                        captureRow,
+                        captureColumn
+                    )
+                ) {
+
+                    let target =
+                        board[captureRow][captureColumn];
+
+
+                    if (
+                        target != "" &&
+                        getColor(target) != currentPlayer
+                    ) {
+
+                        moves.push({
+                            row: captureRow,
+                            column: captureColumn
+                        });
+
+                    }
+                }
+            }
+
+
+            return moves;
+        }
+
+
+
+        // ROOK MOVEMENT
+
+        function getStraightMoves(row, column) {
+
+            return getMovesInDirections(
+                row,
+                column,
+                [
+                    [-1, 0],
+                    [1, 0],
+                    [0, -1],
+                    [0, 1]
+                ]
+            );
+        }
+
+
+
+        // BISHOP MOVEMENT
+
+        function getDiagonalMoves(row, column) {
+
+            return getMovesInDirections(
+                row,
+                column,
+                [
+                    [-1, -1],
+                    [-1, 1],
+                    [1, -1],
+                    [1, 1]
+                ]
+            );
+        }
+
+
+
+        // MOVEMENT FOR ROOK/BISHOP/QUEEN
+
+        function getMovesInDirections(
+            row,
+            column,
+            directions
+        ) {
+
+            let moves = [];
+
+
+            for (let direction of directions) {
+
+                let newRow =
+                    row + direction[0];
+
+                let newColumn =
+                    column + direction[1];
+
+
+                while (
+                    insideBoard(
+                        newRow,
+                        newColumn
+                    )
+                ) {
+
+                    let target =
+                        board[newRow][newColumn];
+
+
+                    if (target == "") {
+
+                        moves.push({
+                            row: newRow,
+                            column: newColumn
+                        });
+
+                    }
+
+                    else {
+
+                        if (
+                            getColor(target) !=
+                            currentPlayer
+                        ) {
+
+                            moves.push({
+                                row: newRow,
+                                column: newColumn
+                            });
+
+                        }
+
+
+                        break;
+                    }
+
+
+                    newRow += direction[0];
+
+                    newColumn += direction[1];
+                }
+            }
+
+
+            return moves;
+        }
+
+
+
+        // KNIGHT MOVEMENT
+
+        function getKnightMoves(row, column) {
+
+            let moves = [];
+
+
+            let positions = [
+
+                [-2, -1],
+                [-2, 1],
+
+                [-1, -2],
+                [-1, 2],
+
+                [1, -2],
+                [1, 2],
+
+                [2, -1],
+                [2, 1]
+
+            ];
+
+
+            for (let position of positions) {
+
+                let newRow =
+                    row + position[0];
+
+                let newColumn =
+                    column + position[1];
+
+
+                if (
+                    insideBoard(
+                        newRow,
+                        newColumn
+                    )
+                ) {
+
+                    let target =
+                        board[newRow][newColumn];
+
+
+                    if (
+                        target == "" ||
+                        getColor(target) != currentPlayer
+                    ) {
+
+                        moves.push({
+                            row: newRow,
+                            column: newColumn
+                        });
+
+                    }
+                }
+            }
+
+
+            return moves;
+        }
+
+
+
+        // KING MOVEMENT
+
+        function getKingMoves(row, column) {
+
+            let moves = [];
+
+
+            for (
+                let rowChange = -1;
+                rowChange <= 1;
+                rowChange++
+            ) {
+
+                for (
+                    let columnChange = -1;
+                    columnChange <= 1;
+                    columnChange++
+                ) {
+
+                    if (
+                        rowChange == 0 &&
+                        columnChange == 0
+                    ) {
+
+                        continue;
+                    }
+
+
+                    let newRow =
+                        row + rowChange;
+
+                    let newColumn =
+                        column + columnChange;
+
+
+                    if (
+                        insideBoard(
+                            newRow,
+                            newColumn
+                        )
+                    ) {
+
+                        let target =
+                            board[newRow][newColumn];
+
+
+                        if (
+                            target == "" ||
+                            getColor(target) != currentPlayer
+                        ) {
+
+                            moves.push({
+                                row: newRow,
+                                column: newColumn
+                            });
+
+                        }
+                    }
+                }
+            }
+
+
+            return moves;
+        }
+
+
+
+        // CHECK IF SQUARE EXISTS
+
+        function insideBoard(row, column) {
+
+            return (
+                row >= 0 &&
+                row < 8 &&
+                column >= 0 &&
+                column < 8
+            );
+        }
+
+
+
+        // FIND PIECE COLOR
+
+        function getColor(piece) {
+
+            let whitePieces = [
+
+                pieces.whiteKing,
+                pieces.whiteQueen,
+                pieces.whiteRook,
+                pieces.whiteBishop,
+                pieces.whiteKnight,
+                pieces.whitePawn
+
+            ];
+
+
+            if (whitePieces.includes(piece)) {
+
+                return "white";
+
+            }
+
+
+            return "black";
+        }
+
+
+
+        // RESTART
+
+        function restartGame() {
+
+            createGame();
+
+        }
+
+    </script>
+
+</body>
+</html>
