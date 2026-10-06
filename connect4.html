@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connect 4</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #071426;
+            color: white;
+            margin: 0;
+        }
+
+        h1 {
+            margin-top: 40px;
+            color: #64ffda;
+            font-size: 40px;
+        }
+
+        #status {
+            color: #ccd6f6;
+            margin-bottom: 25px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(7, 70px);
+            gap: 8px;
+
+            width: fit-content;
+            margin: 20px auto 30px auto;
+            padding: 15px;
+
+            background-color: #112240;
+
+            border: 3px solid #233554;
+            border-radius: 15px;
+
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .cell {
+            width: 70px;
+            height: 70px;
+
+            background-color: #071426;
+
+            border: 3px solid #233554;
+            border-radius: 50%;
+
+            cursor: pointer;
+        }
+
+        .cell:hover {
+            background-color: #1d3557;
+        }
+
+        /* Player 1 */
+        .red {
+            background-color: #ff4b5c;
+            border-color: #ff7582;
+        }
+
+        /* Player 2 */
+        .yellow {
+            background-color: #ffd166;
+            border-color: #ffe29a;
+        }
+
+        /* Keep colors when hovering */
+        .red:hover {
+            background-color: #ff4b5c;
+        }
+
+        .yellow:hover {
+            background-color: #ffd166;
+        }
+
+        #restart {
+            padding: 12px 25px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            background-color: #64ffda;
+            color: #071426;
+
+            border: none;
+            border-radius: 7px;
+
+            cursor: pointer;
+        }
+
+        #restart:hover {
+            background-color: #52d6b8;
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+    <h1>Connect 4</h1>
+
+    <h2 id="status">
+        Player 1's Turn (Red)
+    </h2>
+
+
+    <div class="board" id="board"></div>
+
+
+    <button id="restart" onclick="restartGame()">
+        Restart Game
+    </button>
+
+
+
+    <script>
+
+        // Connect 4 has 6 rows and 7 columns
+        const rows = 6;
+        const columns = 7;
+
+
+        // Player 1 starts the game
+        let currentPlayer = 1;
+
+
+        // Keeps track of whether the game ended
+        let gameOver = false;
+
+
+        // Stores all the pieces
+        let board = [];
+
+
+        // Create the board when the page opens
+        createBoard();
+
+
+
+        function createBoard() {
+
+            // Clear the board array
+            board = [];
+
+
+            // Get the board from HTML
+            let boardElement =
+                document.getElementById("board");
+
+
+            // Clear the visual board
+            boardElement.innerHTML = "";
+
+
+            // Create all 6 rows
+            for (let row = 0; row < rows; row++) {
+
+                board[row] = [];
+
+
+                // Create all 7 columns
+                for (
+                    let column = 0;
+                    column < columns;
+                    column++
+                ) {
+
+                    // 0 means the space is empty
+                    board[row][column] = 0;
+
+
+                    // Create a new circle
+                    let cell =
+                        document.createElement("div");
+
+
+                    cell.classList.add("cell");
+
+
+                    // Save the row and column
+                    cell.setAttribute(
+                        "data-row",
+                        row
+                    );
+
+                    cell.setAttribute(
+                        "data-column",
+                        column
+                    );
+
+
+                    // When the circle is clicked
+                    cell.onclick = function() {
+
+                        play(column);
+
+                    };
+
+
+                    // Add the circle to the board
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+
+
+        function play(column) {
+
+            // Do nothing if game is over
+            if (gameOver == true) {
+                return;
+            }
+
+
+            // Start checking from the bottom
+            for (
+                let row = rows - 1;
+                row >= 0;
+                row--
+            ) {
+
+                // Find the first empty space
+                if (board[row][column] == 0) {
+
+                    // Place player's piece
+                    board[row][column] =
+                        currentPlayer;
+
+
+                    // Find the correct circle
+                    let cell =
+                        document.querySelector(
+                            '[data-row="' +
+                            row +
+                            '"][data-column="' +
+                            column +
+                            '"]'
+                        );
+
+
+                    // Player 1 = Red
+                    if (currentPlayer == 1) {
+
+                        cell.classList.add("red");
+
+                    }
+
+                    // Player 2 = Yellow
+                    else {
+
+                        cell.classList.add("yellow");
+
+                    }
+
+
+                    // Check for winner
+                    if (checkWinner(row, column)) {
+
+                        document.getElementById(
+                            "status"
+                        ).innerHTML =
+                            "Player " +
+                            currentPlayer +
+                            " Wins!";
+
+
+                        gameOver = true;
+
+                        return;
+                    }
+
+
+                    // Check for tie
+                    if (checkTie()) {
+
+                        document.getElementById(
+                            "status"
+                        ).innerHTML =
+                            "It's a Tie!";
+
+
+                        gameOver = true;
+
+                        return;
+                    }
+
+
+                    // Switch players
+                    if (currentPlayer == 1) {
+
+                        currentPlayer = 2;
+
+                        document.getElementById(
+                            "status"
+                        ).innerHTML =
+                            "Player 2's Turn (Yellow)";
+
+                    }
+
+                    else {
+
+                        currentPlayer = 1;
+
+                        document.getElementById(
+                            "status"
+                        ).innerHTML =
+                            "Player 1's Turn (Red)";
+
+                    }
+
+
+                    return;
+                }
+            }
+        }
+
+
+
+        function checkWinner(row, column) {
+
+            // Horizontal
+            if (
+                countPieces(
+                    row,
+                    column,
+                    0,
+                    1
+                ) >= 4
+            ) {
+
+                return true;
+            }
+
+
+            // Vertical
+            if (
+                countPieces(
+                    row,
+                    column,
+                    1,
+                    0
+                ) >= 4
+            ) {
+
+                return true;
+            }
+
+
+            // Diagonal \
+            if (
+                countPieces(
+                    row,
+                    column,
+                    1,
+                    1
+                ) >= 4
+            ) {
+
+                return true;
+            }
+
+
+            // Diagonal /
+            if (
+                countPieces(
+                    row,
+                    column,
+                    1,
+                    -1
+                ) >= 4
+            ) {
+
+                return true;
+            }
+
+
+            return false;
+        }
+
+
+
+        function countPieces(
+            row,
+            column,
+            rowDirection,
+            columnDirection
+        ) {
+
+            let count = 1;
+
+
+            // Check one direction
+            let r =
+                row + rowDirection;
+
+            let c =
+                column + columnDirection;
+
+
+            while (
+                r >= 0 &&
+                r < rows &&
+                c >= 0 &&
+                c < columns &&
+                board[r][c] == currentPlayer
+            ) {
+
+                count++;
+
+                r += rowDirection;
+                c += columnDirection;
+            }
+
+
+
+            // Check opposite direction
+            r =
+                row - rowDirection;
+
+            c =
+                column - columnDirection;
+
+
+            while (
+                r >= 0 &&
+                r < rows &&
+                c >= 0 &&
+                c < columns &&
+                board[r][c] == currentPlayer
+            ) {
+
+                count++;
+
+                r -= rowDirection;
+                c -= columnDirection;
+            }
+
+
+            return count;
+        }
+
+
+
+        function checkTie() {
+
+            // Check the top row
+            for (
+                let column = 0;
+                column < columns;
+                column++
+            ) {
+
+                // If one space is empty,
+                // the game is not a tie
+                if (board[0][column] == 0) {
+
+                    return false;
+                }
+            }
+
+
+            return true;
+        }
+
+
+
+        function restartGame() {
+
+            // Reset player
+            currentPlayer = 1;
+
+
+            // Reset game
+            gameOver = false;
+
+
+            // Reset text
+            document.getElementById(
+                "status"
+            ).innerHTML =
+                "Player 1's Turn (Red)";
+
+
+            // Create a new board
+            createBoard();
+        }
+
+    </script>
+
+
+</body>
+</html>
